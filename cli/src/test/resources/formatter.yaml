@@ -1,0 +1,6 @@
+colonBefore: false
+colonAfter: true
+assignationBefore: true
+assignationAfter: true
+printJump: 1
+ifIndentation: 4
