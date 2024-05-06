@@ -4,7 +4,10 @@ package parser.parserBuilder.printScript11
 
 import parser.analysis.semantic.analyser.DeclarationSemanticAnalyzer
 import parser.analysis.semantic.analyser.SemanticAnalyzer
-import parser.analysis.semantic.rule.*
+import parser.analysis.semantic.rule.BooleanSemantic
+import parser.analysis.semantic.rule.FunctionSemantic
+import parser.analysis.semantic.rule.NumberSemantic
+import parser.analysis.semantic.rule.StringSemantic
 import parser.analysis.syntax.analyzer.SyntaxAnalyzer
 import parser.analysis.syntax.analyzer.SyntaxAnalyzerImpl
 import parser.analysis.syntax.rule.*

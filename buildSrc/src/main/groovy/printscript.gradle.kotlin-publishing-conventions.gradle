@@ -11,7 +11,7 @@ publishing {
         maven {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/tomasfreile/printscript")
-            version = "1.1.6"
+            version = "1.1.10"
             credentials {
                 username = System.getenv("GITHUB_ACTOR")
                 password = System.getenv("GITHUB_TOKEN")

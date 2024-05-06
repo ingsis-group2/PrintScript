@@ -22,3 +22,6 @@ application {
     mainClass = 'cli.PrintScriptKt'
 }
 
+run{
+    standardInput = System.in
+}

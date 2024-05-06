@@ -72,7 +72,7 @@ class LineReader(
                 }
                 condition.isStatementEnd(token) -> {
                     currentStatement.add(token)
-                    if (ifStatmentIsEndingAndElseStatementIsStarting(condition, index, tokens)) {
+                    if (ifStatementIsEndingAndElseStatementIsStarting(condition, index, tokens)) {
                         index++
                         continue
                     }
@@ -87,7 +87,7 @@ class LineReader(
         return Pair(statements, currentStatement)
     }
 
-    private fun ifStatmentIsEndingAndElseStatementIsStarting(
+    private fun ifStatementIsEndingAndElseStatementIsStarting(
         condition: EndCondition,
         index: Int,
         tokens: List<Token>,

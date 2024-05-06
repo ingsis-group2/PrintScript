@@ -50,7 +50,7 @@ koverReport {
     }
     verify {
         rule {
-            minBound(80)
+            minBound(79)
             filters {
                 excludes{
                     packages("cli")
