@@ -3,44 +3,30 @@
 package cli
 
 import ast.AstNode
-import formatter.PrintScriptFormatter
-import formatter.PrintScriptFormatterBuilder
-import interpreter.builder.InterpreterBuilder
+import formatter.Formatter
+import interpreter.interpreter.PrintScriptInterpreter
 import interpreter.result.*
 import interpreter.variable.Variable
-import lexer.factory.LexerBuilder
-import parser.parserBuilder.PrintScriptParserBuilder
-import sca.StaticCodeAnalyzerImpl
+import lexer.Lexer
+import parser.parser.Parser
+import sca.StaticCodeAnalyzer
 import token.Token
 import token.TokenType
 import java.io.File
 
-class PrintScriptRunner(val version: String, val source: File) {
-    private val lexer = LexerBuilder().build(version)
-    private val parser = PrintScriptParserBuilder().build(version)
-    private val interpreter = InterpreterBuilder().build(version)
-    private val symbolTable: MutableMap<Variable, Any> = mutableMapOf()
-    val reader = FileReader(source.inputStream(), version)
-
-    fun validateCode() {
-        while (reader.canContinue()) {
-            val statements = reader.getNextLine()
-            for (statement in statements) {
-                try {
-                    parser.createAST(statement)
-                    println("Validation successful")
-                } catch (e: Exception) {
-                    println("error in parsing: $e")
-                }
-            }
-        }
-    }
-
-    fun executeCode(envFile: File?) {
+class PrintScriptRunner() {
+    fun executeCode(
+        reader: FileReader,
+        lexer: Lexer,
+        parser: Parser,
+        interpreter: PrintScriptInterpreter,
+        symbolTable: MutableMap<Variable, Any>,
+        envFile: File? = null,
+    ): List<String> {
+        val output = mutableListOf<String>()
         if (envFile != null) {
-            insertEnvironmentVariablesInSymbolTable(envFile)
+            insertEnvironmentVariablesInSymbolTable(symbolTable, envFile)
         }
-        symbolTable.put(Variable("input", TokenType.STRINGTYPE, TokenType.CONST), "hola")
         while (reader.canContinue()) {
             val statements = reader.getNextLine()
 
@@ -51,63 +37,61 @@ class PrintScriptRunner(val version: String, val source: File) {
                     if (statementContainsReadInput(statement)) {
                         val index = getReadInputTokenIndex(statement)
                         val input = getInput(statement, index)
-                        ast = createNewAst(statement, input, index)
+                        ast = createNewAst(statement, input, index, lexer, parser)
                     }
                     result = interpreter.interpret(ast, symbolTable) as InterpreterResult
-                    printResults(result)
+                    addResults(result, output)
                 } catch (e: Exception) {
                     println("error in execution: $e")
                     break
                 }
             }
         }
+        return output
     }
 
-    fun formatCode(config: File?) {
-        val formatter =
-            PrintScriptFormatterBuilder().build(
-                version,
-                config?.path ?: throw NullPointerException("Config file null"),
-            ) as PrintScriptFormatter
-        val file = File(source.path)
-        var text = ""
+    fun formatCode(
+        reader: FileReader,
+        parser: Parser,
+        formatter: Formatter,
+    ): String {
+        val formattedCode = StringBuilder()
+        while (reader.canContinue()) {
+            val statements = reader.getNextLine()
+            for (statement in statements) {
+                val ast = parser.createAST(statement)
+                formattedCode.append(formatter.format(ast))
+            }
+        }
+        return formattedCode.toString()
+    }
+
+    fun analyzeCode(
+        reader: FileReader,
+        parser: Parser,
+        analyzer: StaticCodeAnalyzer,
+    ): List<String> {
+        val output = mutableListOf<String>()
         while (reader.canContinue()) {
             val statements = reader.getNextLine()
             for (statement in statements) {
                 try {
                     val ast = parser.createAST(statement)
-                    val line = ast?.let { formatter.format(it) }
-                    text += line
+                    output.addAll(analyzer.analyze(ast))
                 } catch (e: Exception) {
-                    println("error in formatting: $e")
+                    output.add("error in analysis: $e")
                 }
             }
         }
-        file.writeText(text)
-    }
-
-    fun analyzeCode(config: File?) {
-        val sca = StaticCodeAnalyzerImpl(requireNotNull(config?.path) { "Expected config file path for sca." }, version)
-        val errorList = mutableListOf<String>()
-        while (reader.canContinue()) {
-            val statements = reader.getNextLine()
-            for (statement in statements) {
-                try {
-                    val ast = parser.createAST(statement)
-                    val errors = ast?.let { sca.analyze(it) }
-                    errorList += errors ?: emptyList()
-                } catch (e: Exception) {
-                    println("error in analyzing: $e")
-                }
-            }
-        }
-        errorList.forEach(::println)
+        return output
     }
 
     private fun createNewAst(
         statement: List<Token>,
         input: String,
         index: Int,
+        lexer: Lexer,
+        parser: Parser,
     ): AstNode {
         val mutableStatement = statement.toMutableList()
         val size = mutableStatement.size - 1
@@ -141,7 +125,10 @@ class PrintScriptRunner(val version: String, val source: File) {
         return -1
     }
 
-    private fun insertEnvironmentVariablesInSymbolTable(envFile: File?) {
+    private fun insertEnvironmentVariablesInSymbolTable(
+        symbolTable: MutableMap<Variable, Any>,
+        envFile: File?,
+    ) {
         // Read file contents line by line
         val lines = File(envFile!!.path).readLines()
 
@@ -152,15 +139,18 @@ class PrintScriptRunner(val version: String, val source: File) {
         }
     }
 
-    private fun printResults(result: InterpreterResult) {
+    private fun addResults(
+        result: InterpreterResult,
+        output: MutableList<String>,
+    ) {
         when (result) {
-            is PrintResult -> println(result.toPrint)
+            is PrintResult -> output.add(result.toPrint)
             is Result -> Unit // If the result is not a print do nothing.
             is MultipleResults -> for (subResult in result.values) {
-                printResults(subResult)
+                addResults(subResult, output)
             } // Run this function for multiple results.
             is PromptResult -> {
-                printResults(result.printPrompt)
+                addResults(result.printPrompt, output)
             }
         }
     }
