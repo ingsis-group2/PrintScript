@@ -2,6 +2,7 @@ package interpreter.interpreter
 
 import ast.AstNode
 import ast.BinaryOperationNode
+import interpreter.input.InputProvider
 import interpreter.operation.Operation
 import interpreter.variable.Variable
 
@@ -10,10 +11,11 @@ class OperationInterpreter(private val operations: List<Operation>) : Interprete
         node: AstNode?,
         interpreter: PrintScriptInterpreter,
         symbolTable: MutableMap<Variable, Any>,
+        inputProvider: InputProvider,
     ): Any {
         node as BinaryOperationNode
-        val l = interpreter.interpret(node.left, symbolTable)
-        val r = interpreter.interpret(node.right, symbolTable)
+        val l = interpreter.interpret(node.left, symbolTable, inputProvider)
+        val r = interpreter.interpret(node.right, symbolTable, inputProvider)
         for (operation in operations) {
             if (operation.symbol == node.operator) {
                 return operation.resolve(l, r)

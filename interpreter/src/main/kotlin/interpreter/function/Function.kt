@@ -1,6 +1,7 @@
 package interpreter.function
 
 import ast.FunctionNode
+import interpreter.input.InputProvider
 import interpreter.interpreter.PrintScriptInterpreter
 import interpreter.variable.Variable
 import token.TokenType
@@ -12,6 +13,7 @@ interface Function {
         interpreter: PrintScriptInterpreter,
         node: FunctionNode,
         symbolTable: MutableMap<Variable, Any>,
+        inputProvider: InputProvider,
     ): Any
 
     fun canHandle(nodeType: TokenType): Boolean

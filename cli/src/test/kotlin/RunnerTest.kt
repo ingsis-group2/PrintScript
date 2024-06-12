@@ -2,7 +2,7 @@ import cli.FileReader
 import cli.PrintScriptRunner
 import formatter.PrintScriptFormatterBuilder
 import interpreter.builder.InterpreterBuilder
-import lexer.factory.LexerBuilder
+import interpreter.input.InputProvider
 import parser.parserBuilder.PrintScriptParserBuilder
 import sca.StaticCodeAnalyzerImpl
 import java.io.File
@@ -17,10 +17,10 @@ class RunnerTest {
         val output =
             runner.executeCode(
                 FileReader(file.inputStream(), "1.0"),
-                LexerBuilder().build("1.0"),
                 PrintScriptParserBuilder().build("1.0"),
                 InterpreterBuilder().build("1.0"),
                 mutableMapOf(),
+                InputProvider(emptyList()),
             )
         output.forEach { println(it) }
     }
@@ -47,5 +47,19 @@ class RunnerTest {
                 StaticCodeAnalyzerImpl("src/test/resources/sca.yaml", "1.0"),
             )
         errors.forEach { println(it) }
+    }
+
+    @Test
+    fun executeWithInput() {
+        val file = File("src/test/resources/test.ps")
+        val output =
+            runner.executeCode(
+                FileReader(file.inputStream(), "1.1"),
+                PrintScriptParserBuilder().build("1.1"),
+                InterpreterBuilder().build("1.1"),
+                mutableMapOf(),
+                InputProvider(listOf("Funciona", "No funciona", "ffff")),
+            )
+        output.forEach { println(it) }
     }
 }

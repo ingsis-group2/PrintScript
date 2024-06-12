@@ -2,6 +2,7 @@ package interpreter.interpreter
 
 import ast.AstNode
 import ast.NilNode
+import interpreter.input.InputProvider
 import interpreter.variable.Variable
 
 class NilInterpreter : Interpreter {
@@ -9,6 +10,7 @@ class NilInterpreter : Interpreter {
         node: AstNode?,
         interpreter: PrintScriptInterpreter,
         symbolTable: MutableMap<Variable, Any>,
+        inputProvider: InputProvider,
     ): Any {
         node as NilNode
         return node

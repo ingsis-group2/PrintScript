@@ -2,6 +2,7 @@ package interpreter.interpreter
 
 import ast.AssignmentNode
 import ast.AstNode
+import interpreter.input.InputProvider
 import interpreter.result.Result
 import interpreter.variable.Variable
 import token.TokenType
@@ -11,6 +12,7 @@ class AssignationInterpreter : Interpreter {
         node: AstNode?,
         interpreter: PrintScriptInterpreter,
         symbolTable: MutableMap<Variable, Any>,
+        inputProvider: InputProvider,
     ): Any {
         node as AssignmentNode
         val identifier = node.identifier
@@ -29,8 +31,8 @@ class AssignationInterpreter : Interpreter {
                     "In position " + node.position.start.string() + ":" + node.position.end.string(),
             )
         }
-        symbolTable[variable] = interpreter.interpret(node.expression, symbolTable)
-        val value = interpreter.interpret(node.expression, symbolTable)
+        symbolTable[variable] = interpreter.interpret(node.expression, symbolTable, inputProvider)
+        val value = interpreter.interpret(node.expression, symbolTable, inputProvider)
 
         return Result(value)
     }
