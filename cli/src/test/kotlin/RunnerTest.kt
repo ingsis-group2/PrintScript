@@ -7,13 +7,14 @@ import parser.parserBuilder.PrintScriptParserBuilder
 import sca.StaticCodeAnalyzerImpl
 import java.io.File
 import kotlin.test.Test
+import kotlin.test.assertEquals
 
 class RunnerTest {
     private val runner = PrintScriptRunner()
 
     @Test
     fun testExecuteCode() {
-        val file = File("src/test/resources/test.ps")
+        val file = File("src/test/resources/SimplePrint.ps")
         val output =
             runner.executeCode(
                 FileReader(file.inputStream(), "1.0"),
@@ -22,15 +23,17 @@ class RunnerTest {
                 InterpreterBuilder().build("1.0"),
                 mutableMapOf(),
             )
-        output.forEach { println(it) }
+        assertEquals(1, output.outputs.size)
+        assertEquals("1", output.outputs[0])
+        assertEquals(0, output.errors.size)
     }
 
     @Test
     fun testFormat() {
-        val snippet = "println('  Hello, World!');"
+        val file = File("src/test/resources/UnformattedSnippet.ps")
         val formattedCode =
             runner.formatCode(
-                FileReader(snippet.byteInputStream(), "1.0"),
+                FileReader(file.inputStream(), "1.0"),
                 PrintScriptParserBuilder().build("1.0"),
                 PrintScriptFormatterBuilder().build("1.0", "src/test/resources/formatter.yaml"),
             )
@@ -39,13 +42,14 @@ class RunnerTest {
 
     @Test
     fun testAnalyze() {
-        val snippet = "println(1 + 1);"
-        val errors =
+        val file = File("src/test/resources/FailLint.ps")
+        val output =
             runner.analyzeCode(
-                FileReader(snippet.byteInputStream(), "1.0"),
+                FileReader(file.inputStream(), "1.0"),
                 PrintScriptParserBuilder().build("1.0"),
                 StaticCodeAnalyzerImpl("src/test/resources/sca.yaml", "1.0"),
             )
-        errors.forEach { println(it) }
+        assertEquals(1, output.reportList.size)
+        assertEquals(0, output.errors.size)
     }
 }

@@ -15,6 +15,21 @@ import token.TokenType
 import java.io.File
 
 class PrintScriptRunner() {
+    data class ExecutionOutput(
+        val outputs: List<String>,
+        val errors: List<String>,
+    )
+
+    data class FormatterOutput(
+        val formattedCode: String,
+        val errors: List<String>,
+    )
+
+    data class AnalyzerOutput(
+        val reportList: List<String>,
+        val errors: List<String>,
+    )
+
     fun executeCode(
         reader: FileReader,
         lexer: Lexer,
@@ -22,8 +37,9 @@ class PrintScriptRunner() {
         interpreter: PrintScriptInterpreter,
         symbolTable: MutableMap<Variable, Any>,
         envFile: File? = null,
-    ): List<String> {
-        val output = mutableListOf<String>()
+    ): ExecutionOutput {
+        val outputs = mutableListOf<String>()
+        val errors = mutableListOf<String>()
         if (envFile != null) {
             insertEnvironmentVariablesInSymbolTable(symbolTable, envFile)
         }
@@ -40,50 +56,56 @@ class PrintScriptRunner() {
                         ast = createNewAst(statement, input, index, lexer, parser)
                     }
                     result = interpreter.interpret(ast, symbolTable) as InterpreterResult
-                    addResults(result, output)
+                    addResults(result, outputs)
                 } catch (e: Exception) {
-                    println("error in execution: $e")
-                    break
+                    errors.add("Error while executing: $e")
                 }
             }
         }
-        return output
+        return ExecutionOutput(outputs, errors)
     }
 
     fun formatCode(
         reader: FileReader,
         parser: Parser,
         formatter: Formatter,
-    ): String {
+    ): FormatterOutput {
         val formattedCode = StringBuilder()
+        val errors = mutableListOf<String>()
         while (reader.canContinue()) {
             val statements = reader.getNextLine()
             for (statement in statements) {
-                val ast = parser.createAST(statement)
-                formattedCode.append(formatter.format(ast))
+                try {
+                    val ast = parser.createAST(statement)
+                    formattedCode.append(formatter.format(ast))
+                } catch (e: Exception) {
+                    errors.add("Error while formatting: $e")
+                }
             }
         }
-        return formattedCode.toString()
+        return FormatterOutput(formattedCode.toString(), errors)
     }
 
     fun analyzeCode(
         reader: FileReader,
         parser: Parser,
         analyzer: StaticCodeAnalyzer,
-    ): List<String> {
-        val output = mutableListOf<String>()
+    ): AnalyzerOutput {
+        val reportList = mutableListOf<String>()
+        val errors = mutableListOf<String>()
         while (reader.canContinue()) {
             val statements = reader.getNextLine()
             for (statement in statements) {
                 try {
                     val ast = parser.createAST(statement)
-                    output.addAll(analyzer.analyze(ast))
+                    val report = analyzer.analyze(ast)
+                    reportList.addAll(report)
                 } catch (e: Exception) {
-                    output.add("error in analysis: $e")
+                    errors.add("Error while linting: $e")
                 }
             }
         }
-        return output
+        return AnalyzerOutput(reportList, errors)
     }
 
     private fun createNewAst(
