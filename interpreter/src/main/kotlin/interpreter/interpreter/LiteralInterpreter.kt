@@ -3,6 +3,7 @@ package interpreter.interpreter
 import ast.AstNode
 import ast.LiteralNode
 import ast.NilNode
+import interpreter.input.InputProvider
 import interpreter.literal.Literal
 import interpreter.variable.Variable
 import token.TokenType
@@ -12,6 +13,7 @@ class LiteralInterpreter(private val literals: List<Literal>) : Interpreter {
         node: AstNode?,
         interpreter: PrintScriptInterpreter,
         symbolTable: MutableMap<Variable, Any>,
+        inputProvider: InputProvider,
     ): Any {
         node as LiteralNode
         val type = node.type

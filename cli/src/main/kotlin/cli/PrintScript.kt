@@ -10,6 +10,7 @@ import com.github.ajalt.clikt.parameters.types.file
 import formatter.PrintScriptFormatter
 import formatter.PrintScriptFormatterBuilder
 import interpreter.builder.InterpreterBuilder
+import interpreter.input.InputProvider
 import interpreter.interpreter.PrintScriptInterpreter
 import interpreter.result.InterpreterResult
 import interpreter.result.MultipleResults
@@ -93,7 +94,7 @@ class PrintScript : CliktCommand(help = "PrintScript <Version> <Operation> <Sour
                         val input = getInput(statement, index)
                         ast = createNewAst(statement, input, index)
                     }
-                    result = interpreter.interpret(ast, symbolTable) as InterpreterResult
+                    result = interpreter.interpret(ast, symbolTable, InputProvider(emptyList())) as InterpreterResult
                     printResults(result)
                 } catch (e: Exception) {
                     println("error in execution: $e")

@@ -1,6 +1,7 @@
 package interpreter.function
 
 import ast.FunctionNode
+import interpreter.input.InputProvider
 import interpreter.interpreter.PrintScriptInterpreter
 import interpreter.result.PrintResult
 import interpreter.result.PromptResult
@@ -14,25 +15,20 @@ class ReadInputFunction : Function {
         interpreter: PrintScriptInterpreter,
         node: FunctionNode,
         symbolTable: MutableMap<Variable, Any>,
+        inputProvider: InputProvider,
     ): Any {
-        val expression = interpreter.interpret(node.expression, symbolTable).toString()
-        val input = readLine() ?: symbolTable[getVariable(symbolTable, "input")] ?: throw NullPointerException("No input")
-        return PromptResult(input.toString(), PrintResult(expression))
+        val expression = interpreter.interpret(node.expression, symbolTable, inputProvider).toString()
+        // try to readLine, if not possible, try to get an input from the provider
+        val input =
+            try {
+                readLine() ?: inputProvider.getNextInput()
+            } catch (e: IllegalStateException) {
+                throw IllegalStateException("No input available")
+            }
+        return PromptResult(input, PrintResult(expression))
     }
 
     override fun canHandle(nodeType: TokenType): Boolean {
         return nodeType == type
-    }
-
-    private fun getVariable(
-        symbolTable: MutableMap<Variable, Any>,
-        identifier: String,
-    ): Variable {
-        for (variableSymbol in symbolTable.keys) {
-            if (variableSymbol.name == identifier) {
-                return variableSymbol
-            }
-        }
-        throw NullPointerException("Variable not declared")
     }
 }
