@@ -23,7 +23,7 @@ class ReadInputFunction : Function {
             try {
                 readLine() ?: inputProvider.getNextInput()
             } catch (e: IllegalStateException) {
-                throw IllegalStateException("No input available")
+                return PrintResult(expression)
             }
         return PromptResult(input, PrintResult(expression))
     }

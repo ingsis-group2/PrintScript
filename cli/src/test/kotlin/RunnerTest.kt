@@ -3,8 +3,11 @@ import cli.PrintScriptRunner
 import formatter.PrintScriptFormatterBuilder
 import interpreter.builder.InterpreterBuilder
 import interpreter.input.InputProvider
+import interpreter.variable.Variable
+import org.junit.jupiter.api.Assertions.assertFalse
 import parser.parserBuilder.PrintScriptParserBuilder
 import sca.StaticCodeAnalyzerImpl
+import token.TokenType
 import java.io.File
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -77,11 +80,47 @@ class RunnerTest {
                 PrintScriptParserBuilder().build("1.1"),
                 InterpreterBuilder().build("1.1"),
                 mutableMapOf(),
-                InputProvider(listOf("23", "No funciona", "ffff")),
+                InputProvider(listOf("100", "algo")),
             )
         assertEquals(3, output.outputs.size)
         assertEquals("Escribe un número: ", output.outputs[0])
-        assertEquals("23", output.outputs[1])
-        assertEquals("El número es: 23", output.outputs[2])
+        assertEquals("100", output.outputs[1])
+        assertEquals("El número es: 100", output.outputs[2])
+    }
+
+    @Test
+    fun executeWithoutInputShouldReturnThePrompt() {
+        val file = File("src/test/resources/ReadInput.ps")
+        val output =
+            runner.executeCode(
+                FileReader(file.inputStream(), "1.1"),
+                PrintScriptParserBuilder().build("1.1"),
+                InterpreterBuilder().build("1.1"),
+                mutableMapOf(),
+                InputProvider(listOf()),
+            )
+        assertEquals(1, output.outputs.size)
+        assertEquals("Escribe un número: ", output.outputs[0])
+        assertFalse(output.errors.isEmpty())
+    }
+
+    @Test
+    fun executeCodeWithReadEnv() {
+        val file = File("src/test/resources/ReadEnv.ps")
+        val envs = mapOf("ENV_VAR" to "100")
+        val symbolTable = mutableMapOf<Variable, Any>()
+        envs.forEach { (key, value) ->
+            symbolTable[Variable(key, TokenType.STRINGTYPE, TokenType.CONST)] = value
+        }
+        val output =
+            runner.executeCode(
+                FileReader(file.inputStream(), "1.1"),
+                PrintScriptParserBuilder().build("1.1"),
+                InterpreterBuilder().build("1.1"),
+                symbolTable,
+                InputProvider(listOf()),
+            )
+        assertEquals(1, output.outputs.size)
+        assertEquals("100", output.outputs[0])
     }
 }

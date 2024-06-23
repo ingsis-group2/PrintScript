@@ -4,6 +4,7 @@ import ast.AstNode
 import ast.VariableDeclarationNode
 import interpreter.input.InputProvider
 import interpreter.result.MultipleResults
+import interpreter.result.PrintResult
 import interpreter.result.PromptResult
 import interpreter.result.Result
 import interpreter.variable.Variable
@@ -25,6 +26,10 @@ class DeclarationInterpreter : Interpreter {
             return value.values.get(1)
         } else if (value is PromptResult) {
             symbolTable[Variable(identifier, valueType, declarationType)] = value.input
+            return value
+        } else if (value is PrintResult) {
+            // when this point is reached, it means the there was a readInput and there was no input to read
+            // return the expression to be printed
             return value
         }
         symbolTable[Variable(identifier, valueType, declarationType)] = value

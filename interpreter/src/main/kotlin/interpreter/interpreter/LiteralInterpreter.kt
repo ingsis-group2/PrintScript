@@ -22,6 +22,10 @@ class LiteralInterpreter(private val literals: List<Literal>) : Interpreter {
             val value = symbolTable[variable] ?: throw NullPointerException("Variable not declared: ${variable.name}")
             if (value is NilNode) throw NullPointerException("Variable not initialized: ${variable.name}")
             return value
+        } else if (isEnv(node, symbolTable)) {
+            val variable = getVariable(symbolTable, node.value)
+            val value = symbolTable[variable] ?: throw NullPointerException("Variable not declared: ${variable.name}")
+            return value
         } else {
             return getLiteralValue(literals, node)
         }
@@ -54,5 +58,20 @@ class LiteralInterpreter(private val literals: List<Literal>) : Interpreter {
             }
         }
         throw UnsupportedOperationException("Unrecognized literal type: $type")
+    }
+
+    private fun isEnv(
+        node: LiteralNode,
+        symbolTable: MutableMap<Variable, Any>,
+    ): Boolean {
+        if (node.type == TokenType.STRINGLITERAL) {
+            // check if symbol table has a key with name == node.value
+            for (variable in symbolTable.keys) {
+                if (variable.name == node.value) {
+                    return true
+                }
+            }
+        }
+        return false
     }
 }

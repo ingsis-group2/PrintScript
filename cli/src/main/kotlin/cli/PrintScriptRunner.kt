@@ -8,12 +8,8 @@ import interpreter.input.InputProvider
 import interpreter.interpreter.PrintScriptInterpreter
 import interpreter.result.*
 import interpreter.variable.Variable
-import lexer.Lexer
 import parser.parser.Parser
 import sca.StaticCodeAnalyzer
-import token.Token
-import token.TokenType
-import java.io.File
 
 class PrintScriptRunner() {
     data class ExecutionOutput(
@@ -99,36 +95,6 @@ class PrintScriptRunner() {
             }
         }
         return AnalyzerOutput(reportList, errors)
-    }
-
-    private fun createNewAst(
-        statement: List<Token>,
-        input: String,
-        index: Int,
-        lexer: Lexer,
-        parser: Parser,
-    ): AstNode {
-        val mutableStatement = statement.toMutableList()
-        val size = mutableStatement.size - 1
-        for (i in index + 1..<size) {
-            mutableStatement.removeAt(index + 1)
-        }
-        mutableStatement[index] = lexer.lex(input)[0]
-        return parser.createAST(mutableStatement)
-    }
-
-    private fun insertEnvironmentVariablesInSymbolTable(
-        symbolTable: MutableMap<Variable, Any>,
-        envFile: File?,
-    ) {
-        // Read file contents line by line
-        val lines = File(envFile!!.path).readLines()
-
-        // Print each line of the file
-        lines.forEach {
-            val pair = it.split("=")
-            symbolTable[Variable(pair[0], TokenType.STRINGTYPE, TokenType.CONST)] = pair[1]
-        }
     }
 
     private fun addResults(
